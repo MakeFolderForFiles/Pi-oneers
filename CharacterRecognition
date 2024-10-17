@@ -1,0 +1,33 @@
+import cv2
+import os
+import pytesseract
+
+# Set the path to the Tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+
+# Function to process a single image
+def process_single_image(image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    
+    if image is None:
+        print(f"Error: Unable to load image from {image_path}")
+        return
+
+    # Convert the image to grayscale
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Apply a threshold to the grayscale image (preprocess for better OCR accuracy)
+    _, threshold_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
+
+    # Use Tesseract to detect digits in the image
+    digits = pytesseract.image_to_string(threshold_image, config='--psm 6 digits')
+
+    # Print the detected digits
+    print(f"Detected digits: {digits}")
+
+# Path to the image
+image_path = "single_rate_digital_electricity_meter.png"
+
+# Process the single image
+process_single_image(image_path)
