@@ -1,0 +1,57 @@
+import time
+from picamera2 import Picamera2, Preview
+from libcamera import Transform, controls
+import cv2
+import pytesseract
+
+# Set the path to the Tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'  # Adjust path as needed
+
+# Create the camera 
+camera = Picamera2()
+
+# Create the configuration options for the camera and set config
+camera.configure(camera.create_preview_configuration())
+
+# Set camera controls
+camera.set_controls({"Brightness": 1.0})
+
+# Start the preview
+camera.start_preview(Preview.QTGL, x=100, y=200, width=800, height=600, transform=Transform(hflip=1, vflip=1))
+
+# Start the camera
+camera.start()
+
+# Stay in preview for a short duration before taking the image
+time.sleep(2)
+
+# Capture the image and save to a file
+image_path = "captured_image.jpg"
+camera.capture_file(image_path)
+
+# Stop the camera after capturing the image
+camera.stop()
+
+# Function to process a single image and perform OCR
+def process_single_image(image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    
+    if image is None:
+        print(f"Error: Unable to load image from {image_path}")
+        return
+
+    # Convert the image to grayscale
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Apply a threshold to the grayscale image (preprocess for better OCR accuracy)
+    _, threshold_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
+
+    # Use Tesseract to detect digits in the image
+    digits = pytesseract.image_to_string(threshold_image, config='--psm 6 digits')
+
+    # Print the detected digits
+    print(f"Detected digits: {digits}")
+
+# Call the function to process the captured image and perform OCR
+process_single_image(image_path)
